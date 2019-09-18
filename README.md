@@ -1,2 +1,4 @@
-# linki_linkispace
+# Linkispace
 Linkispace is spacial audio mixer
+
+Prototype
