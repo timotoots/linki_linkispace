@@ -31,11 +31,14 @@ app.use(express.static('html'))
 
 ////////////////////////////////////////
 
+// var urlparser = require('./urlparser.js');
+
+// urlparser.getUrl()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serial
 
-var serialDevice = "/dev/tty.wchusbserial1410";
+var serialDevice = "/dev/ttyUSB0";
 
 var SerialPort = require('serialport');
 const Readline = SerialPort.parsers.Readline;
@@ -55,12 +58,10 @@ serialport.on('open', function(){
   // writeToSerial();
   setTimeout(function(){
 
-  	addSound("karnkonn_mono.wav");
+  	addSound("cache/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016.mp3_mono.wav");
   	changeMatrix(4);
   	changeLed(0,"color","blue");
-  	// changeLed(1,"white",100);
-  	// changeLed(2,"white",50);
-  	// changeLed(3,"white",3);
+
 
   },2000);
   
@@ -109,10 +110,17 @@ checkSerialPort();
    	var matrix = mapValues(datas[1],0,255,0,9);
    	changeMatrix(Math.round(matrix));
 
+   	joystickPosition[0] = parseFloat(mapValues(datas[1],0,255,1,-1, false));
+   	console.log(joystickPosition);
+   	positionSound(activeSound,joystickPosition);
+
    } else if(datas[0]=="POTY"){
    	console.log("INPUT: Joystick movement Y".yellow);
 
    	console.log(datas[1]);
+
+   	joystickPosition[1] = parseFloat(mapValues(datas[1],0,255,1,-1, false));
+   	positionSound(activeSound,joystickPosition);
 
    //////////////////////////////////////////////////////////////////////
    	
@@ -160,7 +168,13 @@ checkSerialPort();
 
    	}
 
+   	if(soundstates[activeSound].playstate=="paused"){
+   		playSound(activeSound);
+   	}
+
+
    	changeAllLeds();	
+   	setSoundGain(activeSound,soundstates[activeSound].volume*0.01);
 
 
 
@@ -194,6 +208,22 @@ checkSerialPort();
 			if(soundstates[activeSound].orbit_speed==0){
 	   			soundstates[activeSound].orbit_speed = 10;
 	   		}
+    		changeAllLeds();
+
+	   	} else if(datas[1]=="PAUSE"){
+
+	   		if(soundstates[activeSound].playstate == "paused"){
+				playSound(activeSound);	
+	   		} else {
+	   			pauseSound(activeSound);
+	   		}
+
+    		changeAllLeds();	
+
+	   	} else if(datas[1]=="REWIND"){
+			
+			rewindSound(activeSound);
+	   		
     		changeAllLeds();	
 	   	}
 
@@ -241,7 +271,11 @@ function changeAllLeds(){
 
 	// VOLUME LED
 
-	changeLed(4,"rainbow",soundstates[activeSound].volume);
+	if(soundstates[activeSound].playstate=="playing"){
+		changeLed(4,"rainbow",soundstates[activeSound].volume);
+	} else {
+		changeLed(4,"rainbow",0);
+	}
 
 
 
@@ -340,14 +374,22 @@ function trim(str){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function mapValues(value,in_min, in_max, out_min, out_max) {
-  return Math.round((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
+function mapValues(value,in_min, in_max, out_min, out_max, rounded = true) {
+	var val = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	if(rounded==true){
+		return Math.round(val);
+	} else {
+		val = val.toFixed(3);
+		return val;
+
+	}
+  
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
 
-const processRef = cmd.get('/usr/local/bin/soundspace  --stdin -s /home/timo/linkispace/data/');
+
+const processRef = cmd.get('/usr/local/bin/soundspace  --stdin -s /opt/linki_linkispace/data/');
 let data_line = '';
  
 //listen to the python terminal output
@@ -356,16 +398,17 @@ processRef.stdout.on(
   function(data) {
     data_line += data;
     if (data_line[data_line.length-1] == '\n') {
-      console.log(data_line.yellow);
+      console.log(data_line.gray);
     }
   }
 );
-*/
 
 
 var soundstates = {};
 
 var activeSound = "";
+
+var joystickPosition = [0,0,-1];
 
 ////////////////////////////////////////
 
@@ -380,6 +423,7 @@ function addSound(filename){
 		state.orbit_speed = 0;
 		state.orbit_direction = "CCW";
 		state.position = [0,0,-1];
+		state.playstate = "paused";
 
 		soundstates[filename] = state;
 
@@ -423,6 +467,32 @@ function playSound(filename){
 	var cmd = {};
 	cmd.cmd = "play";
 	cmd.ids = filename;
+	soundstates[filename].playstate = "playing";
+
+	sendSpacesoundCmd(cmd);
+
+}
+
+////////////////////////////////////////
+
+function rewindSound(filename){
+
+	var cmd = {};
+	cmd.cmd = "rewind";
+	cmd.ids = filename;
+
+	sendSpacesoundCmd(cmd);
+
+}
+
+////////////////////////////////////////
+
+function pauseSound(filename){
+
+	var cmd = {};
+	cmd.cmd = "pause";
+	cmd.ids = filename;
+	soundstates[filename].playstate = "paused";
 
 	sendSpacesoundCmd(cmd);
 
@@ -490,7 +560,7 @@ function sendSpacesoundCmd(cmd){
 
 	cmd = JSON.stringify(cmd) + "\n";
 	console.log(cmd.green);
-	// processRef.stdin.write(cmd);
+	processRef.stdin.write(cmd);
 
 }
 
@@ -501,11 +571,12 @@ function sendSpacesoundCmd(cmd){
 
  setTimeout(function(){
 
-	playSound("karnkonn_mono.wav");
-	playSound("uss_mono.wav");
+	playSound("cache/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016.mp3_mono.wav");
+	//playSound("uss_mono.wav");
 
 	setInterval(function(){
 
+		/*
 		console.log(soundstates["karnkonn_mono.wav"]);
 		if(soundstates["karnkonn_mono.wav"].position[0] >= 1){
 			soundstates["karnkonn_mono.wav"].position[0] = -1;
@@ -513,6 +584,8 @@ function sendSpacesoundCmd(cmd){
 		soundstates["karnkonn_mono.wav"].position[0] = soundstates["karnkonn_mono.wav"].position[0] + 0.1;
 
 		positionSound("karnkonn_mono.wav",soundstates["karnkonn_mono.wav"].position);
+		
+		*/
 
 	},300);
 

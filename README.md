@@ -31,6 +31,11 @@ https://github.com/FastLED/FastLED
 * Install Soundspace 
 https://github.com/arneg/soundspace
 
+* Install Sox
+```
+sudo apt-get install sox libsox-fmt-all libsox-fmt-mp3   libsox-fmt-oss 
+```
+
 * Install nodejs
 ```
 sudo apt-get install node npm
