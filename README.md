@@ -17,6 +17,7 @@ https://wiki.wemos.cc/products:d32:d32
 
 ## Controller software
 
+
 * Install libraries in Arduino IDE:
 
 https://github.com/mprograms/SimpleRotary
@@ -33,11 +34,15 @@ https://github.com/arneg/soundspace
 
 * Install nodejs
 ```
-sudo apt-get install node npm
+sudo apt-get install nodejs npm
 ```
 
-* Install node packages
+* Install required node modules
 
 ```
 npm i
+```
+* Allow user to access USB serial port
+```
+sudo usermod -a -G dialout username
 ```
