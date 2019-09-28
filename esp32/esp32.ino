@@ -1,6 +1,7 @@
   
 int currentState[5] = {-1,-1,-1,-1,-1};
 
+const int DEBUG_ENABLED = 1;
 #include "CommandLine.h"
 
   void
@@ -11,6 +12,18 @@ int currentState[5] = {-1,-1,-1,-1,-1};
     setup_matrix();
     setup_touch();
     setup_rgb();
+   // setup_nfc();
+  
+      xTaskCreate(loop_touch,          /* Task function. */
+                    "TOUCH",        /* String with name of task. */
+                    2000,            /* Stack size in words. */
+                    NULL,             /* Parameter passed as input of the task */
+                    1,                /* Priority of the task. */
+                    NULL);            /* Task handle. */
+
+ 
+  
+
   }
 
 int matrix_display = -1;
@@ -54,12 +67,15 @@ bool parse_command(char * commandLine) {
 
     loop_encoder();
     loop_matrix();
-    loop_pot();
+    loop_pot(NULL);
+    //loop_nfc(NULL);
     
     bool received = getCommandLineFromSerialPort(CommandLine);      //global CommandLine is defined in CommandLine.h
     if (received) parse_command(CommandLine);
     
   }
+
+
 
 
   /*

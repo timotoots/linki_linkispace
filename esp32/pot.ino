@@ -42,7 +42,7 @@ void setup_pot() {
   Serial.begin(115200);
 }
 
-void loop_pot() {
+void loop_pot(void * parameter) {
   
   sensorValue1 = analogRead(sensorPin1);
   sensorValue2 = analogRead(sensorPin2);
@@ -65,7 +65,7 @@ void loop_pot() {
     Serial.println(sensorValue2);
   }   
   
-  
+ // loop_pot(NULL);
   
   
 }

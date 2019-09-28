@@ -13,8 +13,8 @@ Release under the GNU General Public License v3
 #include <SimpleRotary.h>
 
 // Pin A, Pin B, Button Pin
-SimpleRotary rotary1(26,27,7);
-SimpleRotary rotary2(33,25,7);
+SimpleRotary rotary1(26,19,7);
+SimpleRotary rotary2(25,33,7);
 
   
 
@@ -51,11 +51,11 @@ void loop_encoder() {
   
   // Only print CW / CCW output to prevent an endless stream of output.
   if (i == 1) {
-    Serial.println("ENC_SPEED:UP");
+    Serial.println("ENC_SPEED:DOWN");
   }
   
   if (i == 2) {
-    Serial.println("ENC_SPEED:DOWN");
+    Serial.println("ENC_SPEED:UP");
   }
   
 }
