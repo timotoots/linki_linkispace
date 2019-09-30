@@ -59,6 +59,7 @@ serialport.on('open', function(){
   setTimeout(function(){
 
   	addSound("cache/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016.mp3_mono.wav");
+  	// addSound("sine1000.wav");
   	changeMatrix(4);
   	changeLed(0,"color","blue");
 
@@ -94,7 +95,54 @@ function checkSerialPort(){
 
 checkSerialPort();
 
+
+function joystickDistance(pointX,pointY) {
+
+	var point = {};
+	point.latitude = pointX;
+	point.longitude = pointY;
+
+	var interest = {"latitude":134,"longitude":126};
+
+
+  let deg2rad = (n) => { return Math.tan(n * (Math.PI/180)) };
+
+  let dLat = deg2rad(interest.latitude - point.latitude );
+  let dLon = deg2rad( interest.longitude - point.longitude );
+
+  let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(point.latitude)) * Math.cos(deg2rad(interest.latitude)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  let c = 2 * Math.asin(Math.sqrt(a));
+
+  c = c.toFixed(2);
+
+  return c;
+}
+
+/*
+
+Input:
+Center of the circle (x, y)
+Radius of circle: r
+Point inside a circle (a, b)
+
+*/
+
+function check_a_point(a, b, x, y, r) {
+    var dist_points = (a - x) * (a - x) + (b - y) * (b - y);
+    r *= r;
+    if (dist_points < r) {
+        return true;
+    }
+    return false;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var currentPotX = 127.5
+var currentPotY = 127.5
+
 
  parser.on('data', function(data){
 
@@ -103,27 +151,72 @@ checkSerialPort();
    data = trim(data);
    datas = data.split(":");
 
-   if(datas[0]=="POTX"){
-   	console.log("INPUT: Joystick movement X".yellow);
+   if(activeSound == ""){
+   	return false;
+   }
 
-   	console.log(datas[1]);
-   	var matrix = mapValues(datas[1],0,255,0,9);
-   	changeMatrix(Math.round(matrix));
 
-   	joystickPosition[0] = parseFloat(mapValues(datas[1],0,255,1,-1, false));
-   	console.log(joystickPosition);
-   	positionSound(activeSound,joystickPosition);
+   if(datas[0]=="POTX" || datas[0]=="POTY"){
 
-   } else if(datas[0]=="POTY"){
-   	console.log("INPUT: Joystick movement Y".yellow);
+	   	console.log("POT: X=" + currentPotX + ", Y=" +currentPotY);
 
-   	console.log(datas[1]);
+   	   	var centeredJoystick = check_a_point(currentPotX, currentPotY, 127.5, 127.5, 120);
 
-   	joystickPosition[1] = parseFloat(mapValues(datas[1],0,255,1,-1, false));
-   	positionSound(activeSound,joystickPosition);
 
-   //////////////////////////////////////////////////////////////////////
-   	
+		if(datas[0]=="POTX"){
+
+		   	currentPotX = datas[1];
+
+			   	// console.log("INPUT: Joystick movement X".yellow);
+
+
+			   	// console.log(datas[1]);
+			   	// var matrix = mapValues(datas[1],0,255,0,9);
+			   	// changeMatrix(Math.round(matrix));
+
+			   	// joystickPosition[0] = parseFloat(mapValues(datas[1],0,255,-1,1, false));
+			   	// console.log(joystickPosition);
+			   	// positionSound(activeSound,joystickPosition);
+
+		 
+
+		   } else if(datas[0]=="POTY"){
+
+		   	  currentPotY = datas[1];
+
+		 //   	var distance = joystickDistance(currentPotX,currentPotY);
+
+		 //    console.log("POT: X=" + currentPotX + ", Y=" +currentPotY);
+		 //  	// console.log("Distance:" + distance);
+			// console.log(check_a_point(currentPotX, currentPotY, 127.5, 127.5, 60));
+
+
+
+		   	// console.log("INPUT: Joystick movement Y".yellow);
+
+		   	// console.log(datas[1]);
+
+		   	// joystickPosition[2] = parseFloat(mapValues(datas[1],0,255,-1,1, false));
+		   	// positionSound(activeSound,joystickPosition);
+
+
+		   //////////////////////////////////////////////////////////////////////
+		   	
+		   }
+
+		   if(!centeredJoystick){
+
+		   		joystickPosition[0] = parseFloat(mapValues(currentPotX,0,255,-1.5,1.5, false));
+	  			joystickPosition[2] = parseFloat(mapValues(currentPotY,0,255,-1.5,1.5, false));
+			   	positionSound(activeSound,joystickPosition);
+			   	soundstates[activeSound].orbit_speed  = 0;
+			   		changeAllLeds();
+
+		   }
+		   
+		   
+
+
    } else if(datas[0]=="ENC_SPEED"){
 
    	//console.log("INPUT: Speed encoder".yellow);
@@ -144,9 +237,10 @@ checkSerialPort();
 
 	 //console.log("New speed:" + soundstates[activeSound].level_orbit_speed);
 
-	// soundstates[activeSound].soundspace_speed = mapValues(soundstates[activeSound].orbit_speed,0,100,0,100);
-	soundstates[activeSound].soundspace_speed = soundstates[activeSound].orbit_speed/100;
-	rotateSound(activeSound,soundstates[activeSound].soundspace_speed,60);
+	 // soundstates[activeSound].soundspace_speed = mapValues(soundstates[activeSound].orbit_speed,0,100,-1,1, false);
+
+	// soundstates[activeSound].soundspace_speed = soundstates[activeSound].orbit_speed/100;
+	// rotateSound(activeSound,soundstates[activeSound].soundspace_speed,60);
 
    	
    	
@@ -224,6 +318,12 @@ checkSerialPort();
 			
 			rewindSound(activeSound);
 	   		
+    		changeAllLeds();	
+
+	   	}  else if(datas[1]=="CENTER"){
+			
+	   		positionSound(activeSound,[0,0,-1]);
+
     		changeAllLeds();	
 	   	}
 
@@ -421,9 +521,12 @@ function addSound(filename){
 		state.volume = 50;
 		state.loop = true;
 		state.orbit_speed = 0;
+		state.orbit_degree = 0;
+
 		state.orbit_direction = "CCW";
 		state.position = [0,0,-1];
 		state.playstate = "paused";
+
 
 		soundstates[filename] = state;
 
@@ -567,12 +670,52 @@ function sendSpacesoundCmd(cmd){
 ////////////////////////////////////////
 
 
+setInterval(checkRotations,50);
+
+
+function checkRotations(){
+
+if(typeof soundstates[activeSound] != "undefined"){
+
+
+	if(soundstates[activeSound].orbit_speed>0){
+
+		var orbitDelta = mapValues(soundstates[activeSound].orbit_speed,0,100,0,45);
+
+		if(soundstates[activeSound].orbit_direction=="CCW"){
+			orbitDelta = orbitDelta * -1;
+		}
+
+
+		soundstates[activeSound].orbit_degree = soundstates[activeSound].orbit_degree + orbitDelta;
+
+		if(soundstates[activeSound].orbit_degree > 360){
+			soundstates[activeSound].orbit_degree = 0;
+		} else if(soundstates[activeSound].orbit_degree < 0){
+			soundstates[activeSound].orbit_degree = 360;
+		}
+
+		var new_point_x = 1 * Math.cos(soundstates[activeSound].orbit_degree * 3.1415926 / 180.0);
+        var new_point_y = 1 * Math.cos(soundstates[activeSound].orbit_degree * 3.1415926 / 180.0);
+
+        console.log(soundstates[activeSound].orbit_degree+" => " +new_point_x +":"+new_point_y);
+
+        positionSound(activeSound,[new_point_x,-1,new_point_y]);
+
+
+
+	}
+		
+}
+}
 
 
  setTimeout(function(){
 
 	playSound("cache/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016/httpssoundcloud.comvulvulpessetsvv001-fusion-of-horizons-2016.mp3_mono.wav");
 	//playSound("uss_mono.wav");
+	// playSound("sine1000.wav");
+
 
 	setInterval(function(){
 
@@ -593,7 +736,7 @@ function sendSpacesoundCmd(cmd){
 	// rotateSound("karnkonn_mono.wav");
 
 
- },5000);
+ },10000);
 
 
 
