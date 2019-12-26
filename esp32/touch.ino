@@ -26,7 +26,7 @@ int touch_pins[7] = {27,2,14,15,4,12,13};
 String touch_labels[7] = { "UNLOAD_THIS","UNLOAD_ALL","PAUSE","REWIND","CENTER","CCW","CW"};
 int touch_status[7] = {0,0,0,0,0,0,0};
 
-int threshold = 10;
+int threshold = 30;
 int wait_for_touch = 1;
 
 void checkMillis(int id){
